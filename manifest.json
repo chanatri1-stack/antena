@@ -12,9 +12,9 @@
   "lang": "ru-RU",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icon-192.png",
+      "sizes": "192*192",
+      "type": "png",
       "purpose": "any maskable"
     }
   ]
