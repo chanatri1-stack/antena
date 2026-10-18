@@ -1,0 +1,22 @@
+{
+  "name": "Yagi & Rotator CAD — Инженерный калькулятор (chanatri1-stack)",
+  "short_name": "AntenaCalc",
+  "description": "Расчет двухдиапазонной антенны Яги (137/145/435 МГц), червячного редуктора, шестерен, мощности моторов ОПУ и диплексера",
+  "start_url": "/antena/index.html",
+  "scope": "/antena/",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "lang": "ru-RU",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
