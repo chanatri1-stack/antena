@@ -13,10 +13,9 @@
   "icons": [
     {
       "src": "icon-192.png",
-      "sizes": "192*192",
-      "type": "png",
-      "purpose": "any maskable"
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
-
