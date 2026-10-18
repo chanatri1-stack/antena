@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Antena CAD — Инженерный расчет Яги и ОПУ (chanatri1-stack)</title>
+
+  <!-- Настройки PWA для работы без адресной строки (Android, iOS, Desktop) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AntenaCAD">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- БОКОВОЕ МЕНЮ (SIDEBAR) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="icon.svg" alt="Logo" class="brand-icon">
+        <div>
+          <div class="brand-title">ANTENA CAD</div>
+          <div class="brand-sub">chanatri1-stack / antena</div>
+        </div>
+        <button class="mobile-close" id="closeSidebarBtn" aria-label="Закрыть меню">✕</button>
+      </div>
+
+      <nav class="nav-menu">
+        <button class="nav-item active" data-tab="tab-yagi">
+          <span class="nav-icon">📡</span>
+          <span>1. Антенна Яги (2 диапазона)</span>
+        </button>
+        <button class="nav-item" data-tab="tab-worm">
+          <span class="nav-icon">⚙️</span>
+          <span>2. Червячный редуктор и шестерни</span>
+        </button>
+        <button class="nav-item" data-tab="tab-motor">
+          <span class="nav-icon">🔋</span>
+          <span>3. Мощность моторов и ветер</span>
+        </button>
+        <button class="nav-item" data-tab="tab-rf">
+          <span class="nav-icon">🌙</span>
+          <span>4. ВЧ-диплексер, МШУ и Луна (EME)</span>
+        </button>
+        <button class="nav-item" data-tab="tab-controller">
+          <span class="nav-icon">🎛️</span>
+          <span>5. Датчики AS5600 и ШИМ-мост</span>
+        </button>
+        <button class="nav-item" data-tab="tab-pwa">
+          <span class="nav-icon">📲</span>
+          <span>6. Справочник формул и GitHub PWA</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button id="installPwaBtn" class="btn-install hidden">📲 Установить как приложение (без адресной строки)</button>
+        <div class="status-badge">🟢 Offline-ready PWA</div>
+      </div>
+    </aside>
+
+    <!-- ОСНОВНОЙ КОНТЕНТ -->
+    <main class="main-content">
+      <header class="topbar">
+        <button class="menu-toggle" id="openSidebarBtn">☰ Меню</button>
+        <div class="topbar-title" id="currentSectionTitle">1. Расчет двухдиапазонной кросс-поляризованной антенны Уда-Яги</div>
+        <div class="topbar-actions">
+          <button class="btn-secondary" onclick="resetDefaults()">↺ Сброс к проекту 1.8 м</button>
+        </div>
+      </header>
+
+      <div class="content-scroll">
+
+        <!-- ==================== ВКЛАДКА 1: АНТЕННА ЯГИ ==================== -->
+        <section id="tab-yagi" class="tab-panel active">
+          <div class="grid-2col">
+            <div class="card">
+              <h3>Параметры проектирования двухдиапазонной Яги</h3>
+              <div class="form-grid">
+                <label>Частота УКВ (VHF, Горизонт.), МГц
+                  <input type="number" id="yagi_f1" value="145.0" step="0.1" min="130" max="174">
+                </label>
+                <label>Частота ДМВ (UHF, Вертик. 90°), МГц
+                  <input type="number" id="yagi_f2" value="435.0" step="0.1" min="400" max="470">
+                </label>
+                <label>Число элементов VHF (2 м)
+                  <input type="number" id="yagi_n1" value="5" step="1" min="3" max="10">
+                </label>
+                <label>Число элементов UHF (70 см)
+                  <input type="number" id="yagi_n2" value="10" step="1" min="5" max="18">
+                </label>
+                <label>Диаметр медного прутка (d), мм
+                  <input type="number" id="yagi_d" value="4.0" step="0.5" min="1.5" max="12">
+                </label>
+                <label>Диаметр трубы траверсы (D), мм
+                  <input type="number" id="yagi_boom_d" value="32" step="1" min="15" max="60">
+                </label>
+                <label>Материал траверсы (бума)
+                  <select id="yagi_boom_mat">
+                    <option value="pvc" selected>Диэлектрик (ПВХ / PPR с черенком — КУ=0)</option>
+                    <option value="metal_iso">Металл (элементы через изолятор — КУ=0.35)</option>
+                    <option value="metal_thru">Металл (сквозной контакт — КУ=0.75)</option>
+                  </select>
+                </label>
+                <label>Зазор в разрезном вибраторе VHF, мм
+                  <input type="number" id="yagi_gap1" value="10" step="1" min="4" max="25">
+                </label>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Радиофизические показатели антенны</h3>
+              <div class="kpi-grid" id="yagi_kpis"></div>
+              <div class="formula-box">
+                <h4>📐 Физические формулы расчета (модель DK7ZB 50 Ом):</h4>
+                <p>1. <b>Длина волны в вакууме:</b> $\lambda = \frac{299792.458}{f\text{ (МГц)}}$ (в мм).</p>
+                <p>2. <b>Коэффициент укорочения от толщины прутка $d/\lambda$:</b> Чем толще медный пруток, тем больше его собственная емкость и тем короче должны быть директоры: $\Delta L = k_d \cdot \ln\left(\frac{d}{0.0018\lambda}\right)$.</p>
+                <p>3. <b>Поправка на металлическую траверсу:</b> $\Delta L_{\text{boom}} = k_b \cdot D_{\text{boom}}$. Для ПВХ/PPR трубы $k_b = 0$ (труба радиопрозрачна).</p>
+                <p>4. <b>Удлинители на 137,5 МГц (NOAA/Метеор):</b> Каждое плечо вибратора удлиняется съемной трубочкой на $\Delta l_{137} = 0.238 \cdot (\lambda_{137.5} - \lambda_{f1})$.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Динамический сборочный чертеж траверсы (в масштабе)</h3>
+            <div class="svg-container" id="yagi_svg_box"></div>
+          </div>
+
+          <div class="grid-2col">
+            <div class="card">
+              <h3>Таблица 1: Разметка секции УКВ (Горизонтальная плоскость)</h3>
+              <div class="table-wrap" id="yagi_table_vhf"></div>
+            </div>
+            <div class="card">
+              <h3>Таблица 2: Разметка секции ДМВ (Вертикальная плоскость 90°)</h3>
+              <div class="table-wrap" id="yagi_table_uhf"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 2: ЧЕРВЯЧНЫЙ МЕХАНИЗМ И ШЕСТЕРНИ ==================== -->
+        <section id="tab-worm" class="tab-panel">
+          <div class="grid-2col">
+            <div class="card">
+              <h3>Геометрия червячной пары и зубчатого колеса</h3>
+              <div class="form-grid">
+                <label>Модуль зацепления (m), мм
+                  <input type="number" id="worm_m" value="2.0" step="0.25" min="0.5" max="10">
+                </label>
+                <label>Число заходов червяка (z₁)
+                  <select id="worm_z1">
+                    <option value="1" selected>1 заход (Максимальное самоторможение)</option>
+                    <option value="2">2 захода (Умеренное самоторможение)</option>
+                    <option value="3">3 захода (Быстрый ход, риск проворота)</option>
+                    <option value="4">4 захода (Без самоторможения)</option>
+                  </select>
+                </label>
+                <label>Число зубьев червячного колеса (z₂)
+                  <input type="number" id="worm_z2" value="50" step="1" min="15" max="180">
+                </label>
+                <label>Коэффициент диаметра червяка (q)
+                  <input type="number" id="worm_q" value="10" step="0.5" min="6" max="20">
+                </label>
+                <label>Материалы трения (коэффициент трения μ)
+                  <select id="worm_mu">
+                    <option value="0.05">Сталь закаленная — Бронза в масле (μ = 0.05)</option>
+                    <option value="0.08" selected>Сталь — Латунь / Полиацеталь POM (μ = 0.08)</option>
+                    <option value="0.11">Сталь — Чугун / Капролон сухой (μ = 0.11)</option>
+                    <option value="0.15">Сталь — Сталь без смазки (μ = 0.15)</option>
+                  </select>
+                </label>
+                <label>Обороты входного вала мотора (n₁), об/мин
+                  <input type="number" id="worm_rpm" value="60" step="5" min="1" max="3000">
+                </label>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Результаты расчета редуктора и проверка самоторможения</h3>
+              <div class="kpi-grid" id="worm_kpis"></div>
+              <div class="formula-box">
+                <h4>📐 Как рассчитывается червячный механизм и шестерня (ГОСТ 19650):</h4>
+                <p>1. <b>Передаточное число:</b> $i = \frac{z_2}{z_1}$, где $z_2$ — число зубьев ведомой шестерни, $z_1$ — число заходов червяка.</p>
+                <p>2. <b>Делительные диаметры:</b> червяка $d_1 = m \cdot q$; червячного колеса (шестерни) $d_2 = m \cdot z_2$.</p>
+                <p>3. <b>Внешние диаметры вершин:</b> червяка $d_{a1} = d_1 + 2m$; колеса $d_{a2} = d_2 + 2m$. Диаметр впадин $d_f = d - 2.4m$.</p>
+                <p>4. <b>Межосевое расстояние (для сверления корпуса ОПУ):</b> $a_w = 0.5 \cdot m \cdot (q + z_2)$.</p>
+                <p>5. <b>Угол подъема витка червяка:</b> $\tan(\gamma) = \frac{z_1}{q} \implies \gamma = \arctan\left(\frac{z_1}{q}\right)$.</p>
+                <p>6. <b>Условие полного самоторможения от ветра:</b> Редуктор гарантированно не провернется назад, если угол подъема витка меньше приведенного угла трения: $\gamma < \rho' = \arctan\left(\frac{\mu}{\cos 20^\circ}\right)$. КПД передачи: $\eta = \frac{\tan\gamma}{\tan(\gamma + \rho')}$.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Динамический чертеж зацепления «Червяк — Червячное колесо»</h3>
+            <div class="svg-container" id="worm_svg_box"></div>
+          </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 3: МОЩНОСТЬ МОТОРОВ И ВЕТРОВАЯ НАГРУЗКА ==================== -->
+        <section id="tab-motor" class="tab-panel">
+          <div class="grid-2col">
+            <div class="card">
+              <h3>Параметры нагрузки для расчета моторов Азимута и Элевации</h3>
+              <div class="form-grid">
+                <label>Длина траверсы антенны (L), м
+                  <input type="number" id="mot_L" value="1.8" step="0.1" min="0.5" max="6.0">
+                </label>
+                <label>Масса собранной антенны с кабелем (m), кг
+                  <input type="number" id="mot_mass" value="1.4" step="0.1" min="0.2" max="25.0">
+                </label>
+                <label>Смещение центра тяжести (дисбаланс e), мм
+                  <input type="number" id="mot_offset" value="40" step="5" min="0" max="500">
+                </label>
+                <label>Скорость штормового ветра (V), м/с
+                  <input type="number" id="mot_wind" value="20" step="1" min="5" max="45">
+                </label>
+                <label>Требуемая скорость наведения (ω), град/сек
+                  <input type="number" id="mot_deg_s" value="6.0" step="0.5" min="1" max="30">
+                </label>
+                <label>Передаточное число редуктора (i)
+                  <input type="number" id="mot_ratio" value="50" step="1" min="1" max="500">
+                </label>
+                <label>КПД червячного редуктора (η), %
+                  <input type="number" id="mot_eff" value="42" step="1" min="15" max="95">
+                </label>
+                <label>Напряжение бортовой сети питания, В
+                  <select id="mot_volt">
+                    <option value="12" selected>12 В (АКБ / Мотор дворников ВАЗ / JGY-370)</option>
+                    <option value="24">24 В (Промышленный привод)</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Расчет крутящего момента, мощности и тока двигателей</h3>
+              <div class="kpi-grid" id="motor_kpis"></div>
+              <div class="formula-box">
+                <h4>📐 Инженерная методика расчета приводов ОПУ:</h4>
+                <p>1. <b>Аэродинамическое давление ветра:</b> $P_w = \frac{1}{2} \rho_{\text{возд}} V^2 \cdot C_d$, где $\rho_{\text{возд}} = 1.225\text{ кг/м}^3$, а коэффициент лобового сопротивления цилиндрических труб $C_d \approx 1.2$.</p>
+                <p>2. <b>Ветровой крутящий момент (Азимут):</b> При порыве ветра с неравномерностью потока ($\Delta k = 0.25$) между передней и задней половиной антенны возникает момент $M_{\text{ветр}} = F_w \cdot \frac{L}{4} \cdot 0.25$.</p>
+                <p>3. <b>Гравитационный момент дисбаланса (Элевация):</b> Если точка крепления смещена от ЦТ на величину $e$, мотор элевации преодолевает $M_{\text{грав}} = m \cdot g \cdot \frac{e}{1000}$.</p>
+                <p>4. <b>Динамический момент инерции при разгоне:</b> Момент инерции стержня $J = \frac{1}{12} m L^2$, тогда $M_{\text{дин}} = J \cdot \varepsilon$.</p>
+                <p>5. <b>Требуемая мощность мотора с учетом КПД редуктора $\eta$ и запаса $K_{\text{зап}} = 1.5$:</b> $P_{\text{эл}} = \frac{M_{\text{сум}} \cdot \omega_{\text{рад/с}}}{\eta_{\text{ред}} \cdot \eta_{\text{двиг}}}$.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Схема распределения сил и крутящих моментов на узлах Азимута и Элевации</h3>
+            <div class="svg-container" id="motor_svg_box"></div>
+          </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 4: ДИПЛЕКСЕР, БАЛУН И РАСЧЕТ ЛУНЫ (EME) ==================== -->
+        <section id="tab-rf" class="tab-panel">
+          <div class="grid-2col">
+            <div class="card">
+              <h3>Параметры ВЧ-тракта, катушек диплексера и радиолинии Луны (EME)</h3>
+              <div class="form-grid">
+                <label>Частота среза ФНЧ (секция VHF), МГц
+                  <input type="number" id="rf_f_lpf" value="165" step="5" min="140" max="220">
+                </label>
+                <label>Частота среза ФВЧ (секция UHF), МГц
+                  <input type="number" id="rf_f_hpf" value="380" step="5" min="300" max="430">
+                </label>
+                <label>Диаметр оправки (сверла) для катушек, мм
+                  <input type="number" id="rf_coil_d" value="6.0" step="0.5" min="3" max="15">
+                </label>
+                <label>Диаметр медного провода катушек, мм
+                  <input type="number" id="rf_wire_d" value="1.0" step="0.1" min="0.5" max="2.5">
+                </label>
+                <label>Коэффициент шума МШУ (LNA NF), дБ
+                  <input type="number" id="rf_lna_nf" value="0.6" step="0.1" min="0.2" max="5.0">
+                </label>
+                <label>Мощность передающей станции на Земле (корреспондент EME), Вт
+                  <input type="number" id="rf_tx_pwr" value="1000" step="100" min="50" max="1500">
+                </label>
+                <label>Усиление антенного стека корреспондента EME, дБи
+                  <input type="number" id="rf_tx_gain" value="19.5" step="0.5" min="10" max="28">
+                </label>
+                <label>Прирост от земли (Ground Gain на восходе Луны), дБ
+                  <input type="number" id="rf_ground_gain" value="5.0" step="0.5" min="0" max="6.0">
+                </label>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Номиналы LC-диплексера (50 Ом) и энергетический бюджет Луны (EME)</h3>
+              <div class="kpi-grid" id="rf_kpis"></div>
+              <div class="formula-box">
+                <h4>📐 Формулы расчета LC-фильтров и локации через Луну:</h4>
+                <p>1. <b>Т-образный ФНЧ 3-го порядка ($Z_0 = 50\text{ Ом}$):</b> $L_{1,2} = \frac{Z_0}{\pi f_c}$, $C_1 = \frac{2}{\pi f_c Z_0}$.</p>
+                <p>2. <b>Т-образный ФВЧ 3-го порядка ($Z_0 = 50\text{ Ом}$):</b> $C_{2,3} = \frac{1}{2\pi f_c Z_0}$, $L_3 = \frac{Z_0}{4\pi f_c}$.</p>
+                <p>3. <b>Формула Уилера для бескаркасной однослойной катушки:</b> $L\text{ (мкГн)} = \frac{r^2 N^2}{228.6 r + 254 l_{\text{нам}}}$, где $r$ — средний радиус витка в мм, $N$ — число витков.</p>
+                <p>4. <b>Затухание радиолинии Земля—Луна—Земля (EME):</b> При среднем расстоянии $R = 384400\text{ км}$ и радиолокационном альбедо Луны $\eta_{\text{луна}} \approx 0.07$ потери пути на 144 МГц составляют $L_{\text{EME}} \approx 251.8\text{ дБ}$.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Интерактивная принципиальная схема диплексера и МШУ с рассчитанными номиналами</h3>
+            <div class="svg-container" id="rf_svg_box"></div>
+          </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 5: ДАТЧИКИ AS5600 И ГИБРИДНЫЙ H-МОСТ ==================== -->
+        <section id="tab-controller" class="tab-panel">
+          <div class="grid-2col">
+            <div class="card">
+              <h3>Калькулятор датчиков угла (AS5600 / Потенциометр) и ключей H-моста</h3>
+              <div class="form-grid">
+                <label>Тип датчика направления
+                  <select id="ctrl_sensor_type">
+                    <option value="as5600" selected>Магнитный энкодер AS5600 (12 бит = 4096 шагов)</option>
+                    <option value="adc10">Потенциометр Bourns 3590S на АЦП Arduino (10 бит = 1024)</option>
+                  </select>
+                </label>
+                <label>Текущий сырой отсчет датчика Азимута (RAW)
+                  <input type="number" id="ctrl_raw_az" value="2048" step="10" min="0" max="4095">
+                </label>
+                <label>Текущий сырой отсчет датчика Элевации (RAW)
+                  <input type="number" id="ctrl_raw_el" value="512" step="10" min="0" max="4095">
+                </label>
+                <label>Сопротивление канала открытого MOSFET $R_{DS(on)}$, мОм
+                  <input type="number" id="ctrl_rdson" value="17.5" step="0.5" min="2" max="100">
+                </label>
+                <label>Рабочий ток мотора под нагрузкой, А
+                  <input type="number" id="ctrl_motor_i" value="3.5" step="0.5" min="0.5" max="20">
+                </label>
+                <label>Заданный ШИМ-сигнал Arduino (0..255)
+                  <input type="number" id="ctrl_pwm" value="180" step="5" min="0" max="255">
+                </label>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Точность наведения и тепловой режим транзистора IRFZ44N</h3>
+              <div class="kpi-grid" id="ctrl_kpis"></div>
+              <div class="formula-box">
+                <h4>📐 Формулы пересчета углов и тепловыделения ключей:</h4>
+                <p>1. <b>Угловое разрешение энкодера AS5600:</b> $\Delta \theta = \frac{360^\circ}{2^{12}} = \frac{360^\circ}{4096} = 0.0879^\circ$ (при ширине луча антенны $\pm 17^\circ$ это дает 190-кратный запас точности!).</p>
+                <p>2. <b>Мощность нагрева транзистора IRFZ44N:</b> $P_{\text{тепл}} = I_{\text{мотора}}^2 \cdot R_{DS(on)} \cdot \frac{\text{PWM}}{255}$. При $P_{\text{тепл}} < 1.0\text{ Вт}$ радиатор для корпуса TO-220 не требуется.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Схема гибридного H-моста (2 реле + MOSFET) и визуализация углов наведения</h3>
+            <div class="svg-container" id="ctrl_svg_box"></div>
+          </div>
+        </section>
+
+        <!-- ==================== ВКЛАДКА 6: ИНСТРУКЦИЯ GITHUB PAGES И PWA ==================== -->
+        <section id="tab-pwa" class="tab-panel">
+          <div class="card">
+            <h3>🚀 Как запустить приложение на GitHub Pages (`chanatri1-stack/antena`) и убрать адресную строку</h3>
+            <ol class="steps-list">
+              <li>Создайте на GitHub публичный репозиторий с именем <b><code>antena</code></b> в вашем аккаунте <b><code>chanatri1-stack</code></b>.</li>
+              <li>Загрузите в корень репозитория все 6 файлов: <code>index.html</code>, <code>style.css</code>, <code>app.js</code>, <code>manifest.json</code>, <code>sw.js</code> и <code>icon.svg</code>.</li>
+              <li>Откройте в репозитории <b>Settings → Pages</b>, в разделе <b>Build and deployment (Source)</b> выберите <b>Deploy from a branch</b>, укажите ветку <b><code>main</code></b> (папка <code>/ (root)</code>) и нажмите <b>Save</b>.</li>
+              <li>Через 1 минуту ваш калькулятор откроется по ссылке: <b><code>https://chanatri1-stack.github.io/antena/</code></b>.</li>
+              <li><b>Как открыть без адресной строки сверху (режим нативного приложения PWA):</b>
+                <ul>
+                  <li><b>На Android (Chrome):</b> Откройте ссылку, нажмите кнопку <b>«📲 Установить как приложение»</b> в левом нижнем углу меню (или в меню браузера <code>⋮ → Установить приложение</code>). На рабочем столе появится иконка <b>AntenaCalc</b> — при запуске через нее адресной строки браузера не будет вообще!</li>
+                  <li><b>На iPhone / iPad (Safari):</b> Откройте ссылку, нажмите кнопку <b>«Поделиться»</b> (квадрат со стрелкой вверх) и выберите <b>«На экран "Домой"»</b>. Запустите с иконки на экране.</li>
+                  <li><b>На ПК (Chrome / Edge):</b> В правой части адресной строки нажмите значок установки приложения (монитор со стрелкой вниз) — калькулятор откроется в отдельном системном окне CAD-программы без вкладок и адресной строки.</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Подключение KaTeX для красивого рендеринга математических формул (с фоллбэком) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
+
