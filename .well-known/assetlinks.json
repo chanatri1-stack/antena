@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.chanatri1_stack.twa",
+        "sha256_cert_fingerprints": ["BC:34:74:14:BE:F9:F8:33:02:E2:A5:13:65:11:A5:72:6A:98:CF:3A:30:AB:A1:D1:05:6C:2F:06:5D:89:42:52"]
+      }
+    }]
